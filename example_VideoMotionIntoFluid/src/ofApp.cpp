@@ -1,7 +1,7 @@
 #include "ofApp.h"
 #include <filesystem>
 
-constexpr float SCALE = 1.0;
+constexpr float FLUID_SIM_SCALE = 0.5;
 
 //--------------------------------------------------------------
 void ofApp::setup() {
@@ -10,7 +10,7 @@ void ofApp::setup() {
 
   motionFromVideo.load(ofToDataPath("trimmed.mov"));
 
-  fluidSimulation.setup(ofGetWindowSize()*SCALE);
+  fluidSimulation.setup(ofGetWindowSize()*FLUID_SIM_SCALE);
   parameters.add(motionFromVideo.getParameterGroup());
   parameters.add(fluidSimulation.getParameterGroup());
   gui.setup(parameters);
@@ -23,16 +23,10 @@ void ofApp::update(){
   motionFromVideo.update();
   
   // Dump some of the motion into the fluid values
-  fluidSimulation.getFlowValuesFbo().getTarget().begin();
-  addTextureShader.render(fluidSimulation.getFlowValuesFbo().getSource(), motionFromVideo.getMotionFbo(), 0.03);
-  fluidSimulation.getFlowValuesFbo().getTarget().end();
-  fluidSimulation.getFlowValuesFbo().swap();
+  addTextureShader.render(fluidSimulation.getFlowValuesFbo(), motionFromVideo.getMotionFbo(), 0.04);
 
   // Add the video motion into the fluid velocities
-  fluidSimulation.getFlowVelocitiesFbo().getTarget().begin();
-  addTextureShader.render(fluidSimulation.getFlowVelocitiesFbo().getSource(), motionFromVideo.getMotionFbo(), 0.005);
-  fluidSimulation.getFlowVelocitiesFbo().getTarget().end();
-  fluidSimulation.getFlowVelocitiesFbo().swap();
+  addTextureShader.render(fluidSimulation.getFlowVelocitiesFbo(), motionFromVideo.getMotionFbo(), 0.001);
   
   fluidSimulation.update();
 }
