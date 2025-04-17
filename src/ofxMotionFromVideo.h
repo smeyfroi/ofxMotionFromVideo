@@ -16,7 +16,9 @@ public:
   void update();
   bool keyPressed(int key);
   void drawVideo();
+  const ofFbo& getVideoFbo() { return videoFbo.getSource(); };
   void drawMotion();
+  const ofFbo& getMotionFbo() const { return opticalFlowFbo; };
   const std::string getParameterGroupName();
   ofParameterGroup& getParameterGroup();
 

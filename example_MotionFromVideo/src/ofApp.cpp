@@ -15,6 +15,9 @@ void ofApp::setup() {
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);
 //  gui.getGroup(motionFromVideo.getParameterGroupName()).minimize();
+  
+//  multiplyColorShader.load();
+  logisticFnShader.load();
 }
 
 //--------------------------------------------------------------
@@ -24,7 +27,9 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  motionFromVideo.drawMotion();
+  logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
+//  multiplyColorShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 0.5, 0.5, 1.0, 1.0 });
+//  motionFromVideo.drawMotion();
   gui.draw();
 }
 
