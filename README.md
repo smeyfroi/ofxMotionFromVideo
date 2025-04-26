@@ -7,7 +7,7 @@ Introduction
 ------------
 A simple GLSL-based optical flow implementation to extract movement from a video source.
 
-![Example screenshot](Screenshot.png]
+![Example screenshot](Screenshot.png)
 
 License
 -------
