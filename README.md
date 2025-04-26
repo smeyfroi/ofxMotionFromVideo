@@ -15,7 +15,7 @@ ofxMotionFromVideo is distributed under the [MIT License](https://en.wikipedia.o
 
 Dependencies
 ------------
-- [ofxRenderer](https://github.com/smeyfroi/ofxRenderer)
+- [ofxRenderer](https://github.com/smeyfroi/ofxRenderer) contains the GLSL code itself
 
 Compatibility
 ------------
