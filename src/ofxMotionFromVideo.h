@@ -12,7 +12,7 @@ class MotionFromVideo {
 public:
   MotionFromVideo();
   ~MotionFromVideo();
-  void load(const std::string& path);
+  void load(const std::string& path, bool mute = true);
   void update();
   bool keyPressed(int key);
   void drawVideo();

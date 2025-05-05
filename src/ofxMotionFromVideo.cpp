@@ -7,9 +7,9 @@ MotionFromVideo::~MotionFromVideo() {
   video.close();
 }
 
-void MotionFromVideo::load(const std::string& path) {
+void MotionFromVideo::load(const std::string& path, bool mute) {
   video.load(path);
-  video.setVolume(0);
+  if (mute) video.setVolume(0);
   video.play();
   videoFbo.allocate(video.getWidth(), video.getHeight(), GL_RGB);
   videoFbo.getSource().begin();
