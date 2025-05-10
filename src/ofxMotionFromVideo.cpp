@@ -47,6 +47,22 @@ void MotionFromVideo::update() {
     doneFirstMotionRender = true;
   }
 
+  opticalFlowFbo.readToPixels(opticalFlowPixels);
+}
+
+std::optional<glm::vec4> MotionFromVideo::trySampleMotion() const {
+  float x = ofRandom(opticalFlowPixels.getWidth());
+  float y = ofRandom(opticalFlowPixels.getHeight());
+  auto c = opticalFlowPixels.getColor(x, y);
+  if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
+    return { glm::vec4 {
+      x,
+      y,
+      c.r,
+      c.g
+    } };
+  }
+  return std::nullopt;
 }
 
 const std::string MotionFromVideo::getParameterGroupName() {
@@ -54,10 +70,18 @@ const std::string MotionFromVideo::getParameterGroupName() {
 }
 
 ofParameterGroup& MotionFromVideo::getParameterGroup() {
-  return opticalFlowShader.getParameterGroup();
+  if (parameters.size() == 0) {
+    parameters.add(opticalFlowShader.getParameterGroup());
+    parameters.add(xFlowThresholdNeg);
+    parameters.add(xFlowThresholdPos);
+    parameters.add(yFlowThresholdNeg);
+    parameters.add(yFlowThresholdPos);
+  }
+  return parameters;
 }
 
 bool MotionFromVideo::keyPressed(int key) {
+  // TODO: toggle video and motion layers. Needs a draw() too
   return false;
 }
 
@@ -68,4 +92,3 @@ void MotionFromVideo::drawVideo() {
 void MotionFromVideo::drawMotion() {
   opticalFlowFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
 }
-
