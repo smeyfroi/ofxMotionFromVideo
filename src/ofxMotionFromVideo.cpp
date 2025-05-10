@@ -9,9 +9,10 @@ MotionFromVideo::~MotionFromVideo() {
 
 void MotionFromVideo::load(const std::string& path, bool mute) {
   video.load(path);
+  size = video.getSize();
   if (mute) video.setVolume(0);
   video.play();
-  videoFbo.allocate(video.getWidth(), video.getHeight(), GL_RGB);
+  videoFbo.allocate(size.x, size.y, GL_RGB);
   videoFbo.getSource().begin();
   ofClear(ofFloatColor { 0.0, 0.0, 0.0});
   videoFbo.getSource().end();
@@ -19,7 +20,7 @@ void MotionFromVideo::load(const std::string& path, bool mute) {
   ofClear(ofFloatColor { 0.0, 0.0, 0.0});
   videoFbo.getTarget().end();
 
-  opticalFlowFbo.allocate(video.getWidth(), video.getHeight(), GL_RGB32F);
+  opticalFlowFbo.allocate(size.x, size.y, GL_RGB32F);
   opticalFlowFbo.begin();
   ofClear(ofFloatColor { 0.0, 0.0, 0.0 });
   opticalFlowFbo.end();
@@ -40,7 +41,7 @@ void MotionFromVideo::update() {
     
     if (doneFirstMotionRender) { // initial skip to avoid huge diff in first frame
       opticalFlowFbo.begin();
-      opticalFlowShader.render(opticalFlowFbo.getWidth(), opticalFlowFbo.getHeight(), videoFbo.getSource(), videoFbo.getTarget());
+      opticalFlowShader.render(size.x, size.y, videoFbo.getSource(), videoFbo.getTarget());
       opticalFlowFbo.end();
     }
     
@@ -51,8 +52,8 @@ void MotionFromVideo::update() {
 }
 
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() const {
-  float x = ofRandom(opticalFlowPixels.getWidth());
-  float y = ofRandom(opticalFlowPixels.getHeight());
+  float x = ofRandom(size.x);
+  float y = ofRandom(size.y);
   auto c = opticalFlowPixels.getColor(x, y);
   if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
     return { glm::vec4 {

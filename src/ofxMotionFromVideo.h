@@ -22,11 +22,13 @@ public:
   const ofFloatPixels& getMotionPixels() const { return opticalFlowPixels; };
   // { x, y, dx, dy }
   std::optional<glm::vec4> trySampleMotion() const;
+  glm::vec2 getSize() const { return size; };
   const std::string getParameterGroupName();
   ofParameterGroup& getParameterGroup();
 
 private:
   ofVideoPlayer video;
+  glm::vec2 size;
   PingPongFbo videoFbo;
   ofFbo opticalFlowFbo;
   OpticalFlowShader opticalFlowShader;
