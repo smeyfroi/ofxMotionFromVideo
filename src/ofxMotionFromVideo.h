@@ -13,6 +13,7 @@ public:
   void load(const std::string& path, bool mute = true);
   void update();
   bool keyPressed(int key);
+  void draw();
   void drawVideo();
   const ofFbo& getVideoFbo() { return videoFbo.getSource(); };
   void drawMotion();
@@ -44,4 +45,7 @@ private:
   ofParameter<float> xFlowThresholdPos {"xFlowThresholdPos", 0.1, 0.0, 0.5};
   ofParameter<float> yFlowThresholdNeg {"yFlowThresholdNeg", -0.1, -0.5, 0.0};
   ofParameter<float> yFlowThresholdPos {"yFlowThresholdPos", 0.1, 0.0, 0.5};
+  
+  bool videoVisible;
+  bool motionVisible;
 };

@@ -78,6 +78,7 @@ void MotionFromVideo::update() {
   }
 
   opticalFlowFbo.readToPixels(opticalFlowPixels);
+  if (isGrabbing) opticalFlowPixels.mirror(false, true);
 }
 
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() const {
@@ -106,15 +107,36 @@ ofParameterGroup& MotionFromVideo::getParameterGroup() {
 }
 
 bool MotionFromVideo::keyPressed(int key) {
-  // TODO: toggle video and motion layers. Needs a draw() too
+  if (key == 'V') {
+    videoVisible = !videoVisible;
+    return true;
+  } else if (key == 'M') {
+    motionVisible = !motionVisible;
+    return true;
+  }
   // TODO: mute/unmute
   return false;
 }
 
+void MotionFromVideo::draw() {
+  if (videoVisible) drawVideo();
+  if (motionVisible) drawMotion();
+}
+
+void drawFbo(const ofFbo& fbo, bool mirrored) {
+  ofPushMatrix();
+  if (mirrored) {
+    ofTranslate(ofGetWindowWidth(), 0);
+    ofScale(-1, 1);
+  }
+  fbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+  ofPopMatrix();
+}
+
 void MotionFromVideo::drawVideo() {
-  videoFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+  drawFbo(videoFbo.getSource(), isGrabbing);
 }
 
 void MotionFromVideo::drawMotion() {
-  opticalFlowFbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+  drawFbo(opticalFlowFbo, isGrabbing);
 }

@@ -23,14 +23,13 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-  ofPushMatrix();
-  const auto& scale = ofGetWindowSize() / motionFromVideo.getSize();
-  ofScale(scale.x, scale.y);
-  logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
-//  multiplyColorShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 0.5, 0.5, 1.0, 1.0 });
-//  motionFromVideo.drawMotion();
-//  motionFromVideo.drawVideo();
-  ofPopMatrix();
+//  ofPushMatrix();
+//  const auto& scale = ofGetWindowSize() / motionFromVideo.getSize();
+//  ofScale(scale.x, scale.y);
+//  logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
+////  multiplyColorShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 0.5, 0.5, 1.0, 1.0 });
+//  ofPopMatrix();
+  motionFromVideo.draw();
   gui.draw();
 }
 
@@ -40,6 +39,7 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
+  motionFromVideo.keyPressed(key);
 }
 
 //--------------------------------------------------------------
