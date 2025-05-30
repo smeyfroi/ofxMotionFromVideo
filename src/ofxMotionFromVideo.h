@@ -3,15 +3,13 @@
 #include "ofMain.h"
 #include "PingPongFbo.h"
 #include "OpticalFlowShader.h"
-//#include "AddTextureShader.h"
-//#include "FluidSimulation.h"
-//#include "FadeShader.h"
 
 class MotionFromVideo {
 
 public:
   MotionFromVideo();
   ~MotionFromVideo();
+  void initialiseCamera(int deviceID, glm::vec2 size);
   void load(const std::string& path, bool mute = true);
   void update();
   bool keyPressed(int key);
@@ -27,7 +25,12 @@ public:
   ofParameterGroup& getParameterGroup();
 
 private:
-  ofVideoPlayer video;
+  void initialiseFbos(glm::vec2 size);
+
+  bool isGrabbing;
+  ofVideoGrabber videoGrabber;
+  ofVideoPlayer videoPlayer;
+
   glm::vec2 size;
   PingPongFbo videoFbo;
   ofFbo opticalFlowFbo;
@@ -41,5 +44,4 @@ private:
   ofParameter<float> xFlowThresholdPos {"xFlowThresholdPos", 0.1, 0.0, 0.5};
   ofParameter<float> yFlowThresholdNeg {"yFlowThresholdNeg", -0.1, -0.5, 0.0};
   ofParameter<float> yFlowThresholdPos {"yFlowThresholdPos", 0.1, 0.0, 0.5};
-
 };

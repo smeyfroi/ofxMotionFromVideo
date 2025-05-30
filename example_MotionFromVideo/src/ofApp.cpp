@@ -5,18 +5,14 @@
 void ofApp::setup() {
   ofDisableArbTex(); // required for texture2D to work in GLSL, makes texture coords normalized
 
-
-//  const std::filesystem::path rootSourceMaterialPath { "/Users/steve/Documents/music-source-material" };
-//  
-//  audioAnalysisClientPtr = std::make_shared<ofxAudioAnalysisClient::LocalGistClient>(rootSourceMaterialPath/"20250207-violin-busy-trill.wav");
   
-  motionFromVideo.load(ofToDataPath("trimmed.mov"));
+//  motionFromVideo.load(ofToDataPath("trimmed.mov"));
+  motionFromVideo.initialiseCamera(0, { 640, 480 });
   
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);
 //  gui.getGroup(motionFromVideo.getParameterGroupName()).minimize();
   
-//  multiplyColorShader.load();
   logisticFnShader.load();
 }
 
@@ -27,9 +23,14 @@ void ofApp::update(){
 
 //--------------------------------------------------------------
 void ofApp::draw(){
+  ofPushMatrix();
+  const auto& scale = ofGetWindowSize() / motionFromVideo.getSize();
+  ofScale(scale.x, scale.y);
   logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
 //  multiplyColorShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 0.5, 0.5, 1.0, 1.0 });
 //  motionFromVideo.drawMotion();
+//  motionFromVideo.drawVideo();
+  ofPopMatrix();
   gui.draw();
 }
 

@@ -4,14 +4,35 @@ MotionFromVideo::MotionFromVideo() {
 }
 
 MotionFromVideo::~MotionFromVideo() {
-  video.close();
+  if (videoPlayer.isInitialized()) videoPlayer.close();
+//  if (videoGrabber.isInitialized()) videoGrabber.close();
+}
+
+void MotionFromVideo::initialiseCamera(int deviceID, glm::vec2 size) {
+  isGrabbing = true;
+  const auto& devices = videoGrabber.listDevices(); // dumps device IDs to stdout
+  videoGrabber.setDeviceID(deviceID);
+  videoGrabber.setup(size.x, size.y);
+//  std::for_each(devices.cbegin(), devices.cend(), [](const auto& d) {
+//    ofLogNotice() << d.id << " : " << d.deviceName;
+//    const auto& formats = d.formats;
+//    std::for_each(formats.cbegin(), formats.cend(), [](const auto& f) {
+//      ofLogNotice() << "  " << f.pixelFormat << " , " << f.width << " x " << f.height << " , "; // << framerates;
+//    });
+//  });
+  initialiseFbos(videoGrabber.getSize());
 }
 
 void MotionFromVideo::load(const std::string& path, bool mute) {
-  video.load(path);
-  size = video.getSize();
-  if (mute) video.setVolume(0);
-  video.play();
+  isGrabbing = false;
+  videoPlayer.load(path);
+  if (mute) videoPlayer.setVolume(0);
+  videoPlayer.play();
+  initialiseFbos(videoPlayer.getSize());
+}
+
+void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
+  size = size_;
   videoFbo.allocate(size.x, size.y, GL_RGB);
   videoFbo.getSource().begin();
   ofClear(ofFloatColor { 0.0, 0.0, 0.0});
@@ -29,14 +50,22 @@ void MotionFromVideo::load(const std::string& path, bool mute) {
 }
 
 void MotionFromVideo::update() {
-  video.update();
-
-  if (video.isFrameNew()) {
+  bool hasNewFrame = false;
+  if (isGrabbing) {
+    videoGrabber.update();
+    hasNewFrame = videoGrabber.isFrameNew();
+  } else {
+    videoPlayer.update();
+    hasNewFrame = videoPlayer.isFrameNew();
+  }
+  
+  if (hasNewFrame) {
     // target is last frame, source is current frame
     videoFbo.swap();
     videoFbo.getSource().begin();
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-    video.getTexture().draw(0, 0);
+    auto& texture = isGrabbing ? videoGrabber.getTexture() : videoPlayer.getTexture();
+    texture.draw(0, 0);
     videoFbo.getSource().end();
     
     if (doneFirstMotionRender) { // initial skip to avoid huge diff in first frame
@@ -56,12 +85,7 @@ std::optional<glm::vec4> MotionFromVideo::trySampleMotion() const {
   float y = ofRandom(size.y);
   auto c = opticalFlowPixels.getColor(x, y);
   if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
-    return { glm::vec4 {
-      x,
-      y,
-      c.r,
-      c.g
-    } };
+    return { glm::vec4 { x, y, c.r, c.g } };
   }
   return std::nullopt;
 }
@@ -83,6 +107,7 @@ ofParameterGroup& MotionFromVideo::getParameterGroup() {
 
 bool MotionFromVideo::keyPressed(int key) {
   // TODO: toggle video and motion layers. Needs a draw() too
+  // TODO: mute/unmute
   return false;
 }
 
