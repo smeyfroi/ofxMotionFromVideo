@@ -35,6 +35,7 @@ void ofApp::update(){
 void ofApp::draw(){
   ofSetWindowTitle(ofToString(ofGetFrameRate()));
   fluidSimulation.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  motionFromVideo.draw();
   gui.draw();
 }
 
@@ -44,6 +45,7 @@ void ofApp::exit(){
 
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
+  motionFromVideo.keyPressed(key);
 }
 
 //--------------------------------------------------------------

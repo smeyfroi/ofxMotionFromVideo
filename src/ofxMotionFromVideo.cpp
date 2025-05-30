@@ -134,9 +134,17 @@ void drawFbo(const ofFbo& fbo, bool mirrored) {
 }
 
 void MotionFromVideo::drawVideo() {
+  ofPushStyle();
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 0.25 });
   drawFbo(videoFbo.getSource(), isGrabbing);
+  ofPopStyle();
 }
 
 void MotionFromVideo::drawMotion() {
+  ofPushStyle();
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 0.25 });
   drawFbo(opticalFlowFbo, isGrabbing);
+  ofPopStyle();
 }
