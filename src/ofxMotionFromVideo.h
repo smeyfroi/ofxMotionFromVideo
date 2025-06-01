@@ -20,10 +20,11 @@ public:
   const ofFbo& getMotionFbo() const { return opticalFlowFbo; };
   const ofFloatPixels& getMotionPixels() const { return opticalFlowPixels; };
   // { x, y, dx, dy }
-  std::optional<glm::vec4> trySampleMotion() const;
+  std::optional<glm::vec4> trySampleMotion();
   glm::vec2 getSize() const { return size; };
-  const std::string getParameterGroupName();
+  const std::string getParameterGroupName() const;
   ofParameterGroup& getParameterGroup();
+  bool isReady() { return videoFbo.getSource().isAllocated() &&  startupFrame == 0; };
 
 private:
   void initialiseFbos(glm::vec2 size);
@@ -36,7 +37,7 @@ private:
   PingPongFbo videoFbo;
   ofFbo opticalFlowFbo;
   OpticalFlowShader opticalFlowShader;
-  bool doneFirstMotionRender { false };
+  int startupFrame { -5 }; // ignore the first few frames
   
   ofFloatPixels opticalFlowPixels;
   

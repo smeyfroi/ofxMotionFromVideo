@@ -50,6 +50,8 @@ void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
 }
 
 void MotionFromVideo::update() {
+  if (!videoFbo.getSource().isAllocated()) return;
+  
   bool hasNewFrame = false;
   if (isGrabbing) {
     videoGrabber.update();
@@ -67,31 +69,33 @@ void MotionFromVideo::update() {
     auto& texture = isGrabbing ? videoGrabber.getTexture() : videoPlayer.getTexture();
     texture.draw(0, 0);
     videoFbo.getSource().end();
-    
-    if (doneFirstMotionRender) { // initial skip to avoid huge diff in first frame
+      
+    if (startupFrame == 0) {
       opticalFlowFbo.begin();
       opticalFlowShader.render(size.x, size.y, videoFbo.getSource(), videoFbo.getTarget());
       opticalFlowFbo.end();
+    } else {
+      startupFrame++;
     }
-    
-    doneFirstMotionRender = true;
   }
 
   opticalFlowFbo.readToPixels(opticalFlowPixels);
   if (isGrabbing) opticalFlowPixels.mirror(false, true);
 }
 
-std::optional<glm::vec4> MotionFromVideo::trySampleMotion() const {
+std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
+  if (!isReady()) return {};
+  
   float x = ofRandom(size.x);
   float y = ofRandom(size.y);
   auto c = opticalFlowPixels.getColor(x, y);
   if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
     return { glm::vec4 { x, y, c.r, c.g } };
   }
-  return std::nullopt;
+  return {};
 }
 
-const std::string MotionFromVideo::getParameterGroupName() {
+const std::string MotionFromVideo::getParameterGroupName() const {
   return "MotionFromVideo";
 }
 
