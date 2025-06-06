@@ -101,6 +101,7 @@ const std::string MotionFromVideo::getParameterGroupName() const {
 
 ofParameterGroup& MotionFromVideo::getParameterGroup() {
   if (parameters.size() == 0) {
+    parameters.setName(getParameterGroupName());
     parameters.add(opticalFlowShader.getParameterGroup());
     parameters.add(xFlowThresholdNeg);
     parameters.add(xFlowThresholdPos);

@@ -37,7 +37,7 @@ private:
   PingPongFbo videoFbo;
   ofFbo opticalFlowFbo;
   OpticalFlowShader opticalFlowShader;
-  int startupFrame { -5 }; // ignore the first few frames
+  int startupFrame { -30 }; // ignore the first few frames
   
   ofFloatPixels opticalFlowPixels;
   
