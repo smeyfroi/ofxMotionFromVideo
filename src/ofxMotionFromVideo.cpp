@@ -1,7 +1,9 @@
 #include "ofxMotionFromVideo.h"
 
-MotionFromVideo::MotionFromVideo() {
-}
+MotionFromVideo::MotionFromVideo() :
+videoVisible { false },
+motionVisible { false }
+{}
 
 MotionFromVideo::~MotionFromVideo() {
   if (videoPlayer.isInitialized()) videoPlayer.close();
