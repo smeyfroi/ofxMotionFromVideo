@@ -82,7 +82,7 @@ void MotionFromVideo::update() {
   }
 
   opticalFlowFbo.readToPixels(opticalFlowPixels);
-  if (isGrabbing) opticalFlowPixels.mirror(false, true);
+  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
 }
 
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
@@ -133,10 +133,10 @@ void MotionFromVideo::draw() {
 void drawFbo(const ofFbo& fbo, bool mirrored) {
   ofPushMatrix();
   if (mirrored) {
-    ofTranslate(ofGetWindowWidth(), 0);
+    ofTranslate(1.0, 0.0);
     ofScale(-1, 1);
   }
-  fbo.draw(0.0, 0.0, ofGetWindowWidth(), ofGetWindowHeight());
+  fbo.draw(0.0, 0.0, 1.0, 1.0);
   ofPopMatrix();
 }
 
