@@ -1,36 +1,46 @@
 #include "ofApp.h"
 #include <filesystem>
+#include "ofxTimeMeasurements.h"
 
 //--------------------------------------------------------------
 void ofApp::setup() {
-  ofDisableArbTex(); // required for texture2D to work in GLSL, makes texture coords normalized
+  ofDisableArbTex();
+  ofSetFrameRate(30);
 
-  
 //  motionFromVideo.load(ofToDataPath("trimmed.mov"));
   motionFromVideo.initialiseCamera(0, { 640, 480 });
   
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);
-//  gui.getGroup(motionFromVideo.getParameterGroupName()).minimize();
   
-  logisticFnShader.load();
+//  logisticFnShader.load();
+  
+  TIME_SAMPLE_SET_FRAMERATE(30);
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+  TSGL_START("update");
+  TS_START("update");
   motionFromVideo.update();
+  TS_STOP("update");
+  TSGL_STOP("update");
 }
 
 //--------------------------------------------------------------
 void ofApp::draw(){
-//  ofPushMatrix();
+  TSGL_START("update");
+  TS_START("update");
+  ofPushMatrix();
 //  const auto& scale = ofGetWindowSize() / motionFromVideo.getSize();
 //  ofScale(scale.x, scale.y);
 //  logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
-////  multiplyColorShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 0.5, 0.5, 1.0, 1.0 });
-//  ofPopMatrix();
+  ofScale(ofGetWidth(), ofGetHeight());
   motionFromVideo.draw();
+  ofPopMatrix();
   gui.draw();
+  TS_STOP("update");
+  TSGL_STOP("update");
 }
 
 //--------------------------------------------------------------

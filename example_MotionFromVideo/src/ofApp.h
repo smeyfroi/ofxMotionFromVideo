@@ -3,8 +3,7 @@
 #include "ofMain.h"
 #include "ofxMotionFromVideo.h"
 #include "ofxGui.h"
-//#include "MultiplyColorShader.h"
-#include "LogisticFnShader.h"
+//#include "LogisticFnShader.h"
 
 class ofApp: public ofBaseApp{
 public:
@@ -27,7 +26,7 @@ private:
   MotionFromVideo motionFromVideo;
   
 //  MultiplyColorShader multiplyColorShader;
-  LogisticFnShader logisticFnShader;
+//  LogisticFnShader logisticFnShader;
   
   bool guiVisible { false };
   ofxPanel gui;
