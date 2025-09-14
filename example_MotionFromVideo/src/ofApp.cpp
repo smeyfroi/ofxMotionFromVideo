@@ -8,7 +8,7 @@ void ofApp::setup() {
   ofSetFrameRate(30);
 
 //  motionFromVideo.load(ofToDataPath("trimmed.mov"));
-  motionFromVideo.initialiseCamera(0, { 640, 480 });
+  motionFromVideo.initialiseCamera(0, { 1280, 720 });
   
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);

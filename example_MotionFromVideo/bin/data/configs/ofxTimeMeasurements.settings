@@ -1,0 +1,5 @@
+draw()=1|1|0
+GL_update=1|1|0
+keyPressed()=1|1|0
+update=1|1|0
+update()=1|1|0
