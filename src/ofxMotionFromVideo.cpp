@@ -92,8 +92,13 @@ void MotionFromVideo::update() {
     videoFbo.swap();
     videoFbo.getSource().begin();
     ofEnableBlendMode(OF_BLENDMODE_DISABLED);
-    auto& texture = isGrabbing ? videoGrabber.getTexture() : videoPlayer.getTexture();
-    texture.draw(0, 0);
+    if (isGrabbing) {
+      auto& texture = videoGrabber.getTexture();
+      texture.draw(texture.getWidth(), 0, -texture.getWidth(), texture.getHeight());
+    } else {
+      auto& texture = videoPlayer.getTexture();
+      texture.draw(0.0, 0.0);
+    }
     videoFbo.getSource().end();
       
     if (startupFrame == 0) {
@@ -136,10 +141,6 @@ void drawFbo(const ofFbo& fbo, bool mirrored) {
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
   ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 0.25 });
   ofPushMatrix();
-  if (mirrored) {
-    ofTranslate(1.0, 0.0);
-    ofScale(-1, 1);
-  }
   fbo.draw(0.0, 0.0, 1.0, 1.0);
   ofPopMatrix();
   ofPopStyle();
