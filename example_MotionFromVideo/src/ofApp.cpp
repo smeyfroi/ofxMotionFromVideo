@@ -13,8 +13,6 @@ void ofApp::setup() {
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);
   
-//  logisticFnShader.load();
-  
   TIME_SAMPLE_SET_FRAMERATE(30);
 }
 
@@ -31,13 +29,14 @@ void ofApp::update(){
 void ofApp::draw(){
   TSGL_START("update");
   TS_START("update");
-  ofPushMatrix();
-//  const auto& scale = ofGetWindowSize() / motionFromVideo.getSize();
-//  ofScale(scale.x, scale.y);
-//  logisticFnShader.render(motionFromVideo.getMotionFbo(), glm::vec4 { 1.0, 1.0, 0.0, 0.0 });
-  ofScale(ofGetWidth(), ofGetHeight());
-  motionFromVideo.draw();
-  ofPopMatrix();
+
+//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+//  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
+//  motionFromVideo.getVideoFbo().draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
+  motionFromVideo.getMotionFbo().draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+
   gui.draw();
   TS_STOP("update");
   TSGL_STOP("update");

@@ -1,8 +1,7 @@
 #include "ofxMotionFromVideo.h"
 
 MotionFromVideo::~MotionFromVideo() {
-  if (videoPlayer.isInitialized()) videoPlayer.close();
-  if (videoGrabber.isInitialized()) videoGrabber.close();
+  stop();
 }
 
 void MotionFromVideo::initialiseCamera(int deviceID, glm::vec2 size) {
@@ -25,10 +24,18 @@ void MotionFromVideo::initialiseCamera(int deviceID, glm::vec2 size) {
 
 void MotionFromVideo::load(const std::string& path, bool mute) {
   isGrabbing = false;
-  videoPlayer.load(path);
+  if (!videoPlayer.load(path)) {
+    ofLogError("MotionFromVideo") << "load(): failed to load video from " << path;
+    return;
+  }
   if (mute) videoPlayer.setVolume(0);
   videoPlayer.play();
   initialiseFbos(videoPlayer.getSize());
+}
+
+void MotionFromVideo::stop() {
+  if (videoPlayer.isInitialized()) videoPlayer.close();
+  if (videoGrabber.isInitialized()) videoGrabber.close();
 }
 
 void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
@@ -56,7 +63,7 @@ void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
     ofFboSettings s;
     s.width = size.x;
     s.height = size.y;
-    s.internalformat = GL_RG16F; // 3 channels half-float because we keep an ofPixels from this, so can't use just two channels TODO revisit this when we aren't copying to ofPixels
+    s.internalformat = GL_RGB16F; // 3 channels half-float because we keep an ofPixels from this, so can't use just two channels
     s.useDepth = false;
     s.useStencil = false;
     s.depthStencilAsTexture = false;
@@ -109,6 +116,21 @@ void MotionFromVideo::update() {
       startupFrame++;
     }
   }
+  
+  opticalFlowFbo.readToPixels(opticalFlowPixels);
+//  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
+}
+
+std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
+  if (!isReady()) return {};
+  
+  float x = ofRandom(size.x);
+  float y = ofRandom(size.y);
+  auto c = opticalFlowPixels.getColor(x, y);
+  if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
+    return { glm::vec4 { x, y, c.r, c.g } };
+  }
+  return {};
 }
 
 const std::string MotionFromVideo::getParameterGroupName() const {
@@ -119,6 +141,10 @@ ofParameterGroup& MotionFromVideo::getParameterGroup() {
   if (parameters.size() == 0) {
     parameters.setName(getParameterGroupName());
     parameters.add(opticalFlowShader.getParameterGroup());
+    parameters.add(xFlowThresholdNeg);
+    parameters.add(xFlowThresholdPos);
+    parameters.add(yFlowThresholdNeg);
+    parameters.add(yFlowThresholdPos);
   }
   return parameters;
 }
@@ -136,6 +162,7 @@ bool MotionFromVideo::keyPressed(int key) {
 }
 
 // For debug only
+// Assumes normalised viewport coords
 void drawFbo(const ofFbo& fbo, bool mirrored) {
   ofPushStyle();
   ofEnableBlendMode(OF_BLENDMODE_ALPHA);
