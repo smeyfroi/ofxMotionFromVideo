@@ -121,6 +121,7 @@ void MotionFromVideo::update() {
 //  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
 }
 
+// Returns normalised position and scaled velocity
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
   if (!isReady()) return {};
   
@@ -128,7 +129,7 @@ std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
   float y = ofRandom(size.y);
   auto c = opticalFlowPixels.getColor(x, y);
   if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
-    return { glm::vec4 { x, y, c.r, c.g } };
+    return { glm::vec4 { x / size.x, y / size.y, c.r / size.x, c.g / size.x } };
   }
   return {};
 }
