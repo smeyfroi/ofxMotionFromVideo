@@ -85,6 +85,13 @@ void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
 void MotionFromVideo::update() {
   if (!videoFbo.getSource().isAllocated()) return;
   
+  // Guard against update after stop() - video may have been closed
+  if (isGrabbing) {
+    if (!videoGrabber.isInitialized()) return;
+  } else {
+    if (!videoPlayer.isLoaded()) return;
+  }
+  
   bool hasNewFrame = false;
   if (isGrabbing) {
     videoGrabber.update();
