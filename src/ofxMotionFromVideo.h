@@ -1,5 +1,8 @@
 #pragma once
 
+#include <optional>
+#include <string>
+
 #include "ofMain.h"
 #include "PingPongFbo.h"
 #include "OpticalFlowShader.h"
