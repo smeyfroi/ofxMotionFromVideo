@@ -33,6 +33,29 @@ void MotionFromVideo::load(const std::string& path, bool mute) {
   initialiseFbos(videoPlayer.getSize());
 }
 
+void MotionFromVideo::setPositionSeconds(int seconds) {
+  if (isGrabbing) {
+    ofLogWarning("MotionFromVideo") << "setPositionSeconds(): not supported for camera source";
+    return;
+  }
+  if (!videoPlayer.isLoaded()) {
+    ofLogWarning("MotionFromVideo") << "setPositionSeconds(): video not loaded";
+    return;
+  }
+  float duration = videoPlayer.getDuration();
+  if (duration <= 0) {
+    ofLogWarning("MotionFromVideo") << "setPositionSeconds(): video has no duration";
+    return;
+  }
+  float position = static_cast<float>(seconds) / duration;
+  if (position < 0.0f || position > 1.0f) {
+    ofLogWarning("MotionFromVideo") << "setPositionSeconds(): " << seconds << "s is out of range (duration: " << duration << "s)";
+    position = std::clamp(position, 0.0f, 1.0f);
+  }
+  videoPlayer.setPosition(position);
+  ofLogNotice("MotionFromVideo") << "setPositionSeconds(): set to " << seconds << "s (position: " << position << ")";
+}
+
 void MotionFromVideo::stop() {
   if (videoPlayer.isInitialized()) videoPlayer.close();
   if (videoGrabber.isInitialized()) videoGrabber.close();

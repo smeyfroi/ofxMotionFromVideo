@@ -13,6 +13,7 @@ public:
   ~MotionFromVideo();
   void initialiseCamera(int deviceID, glm::vec2 size);
   void load(const std::string& path, bool mute = true);
+  void setPositionSeconds(int seconds);
   void stop();
   void update();
   bool keyPressed(int key);
