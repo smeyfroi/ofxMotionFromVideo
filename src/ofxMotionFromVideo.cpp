@@ -155,8 +155,8 @@ void MotionFromVideo::update() {
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
   if (!isReady()) return {};
   
-  float x = ofRandom(size.x);
-  float y = ofRandom(size.y);
+  float x = ofRandom(size.x-1);
+  float y = ofRandom(size.y-1);
   auto c = opticalFlowPixels.getColor(x, y);
   if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
     return { glm::vec4 { x / size.x, y / size.y, c.r / size.x, c.g / size.x } };
