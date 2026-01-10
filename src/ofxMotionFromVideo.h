@@ -30,6 +30,11 @@ public:
   ofParameterGroup& getParameterGroup();
   bool isReady() { return videoFbo.getSource().isAllocated() && startupFrame == 0; };
 
+  bool isVideoVisible() const { return videoVisible; }
+  bool isMotionVisible() const { return motionVisible; }
+  void setVideoVisible(bool visible) { videoVisible = visible; }
+  void setMotionVisible(bool visible) { motionVisible = visible; }
+
 private:
   void initialiseFbos(glm::vec2 size);
 
