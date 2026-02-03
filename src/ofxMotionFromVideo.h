@@ -19,16 +19,21 @@ public:
   bool keyPressed(int key);
   void draw();
   void drawVideo();
-  const ofFbo& getVideoFbo() { return videoFbo.getSource(); };
+  const ofFbo& getVideoFbo() const { return videoFbo.getSource(); };
   void drawMotion();
   const ofFbo& getMotionFbo() const { return opticalFlowFbo; };
   
-  std::optional<glm::vec4> trySampleMotion(); // { x, y, dx, dy }
+  // Returns { x, y, dx, dy } where x,y are normalized [0..1] and dx,dy are scaled velocities.
+  std::optional<glm::vec4> trySampleMotion();
 
-  glm::vec2 getSize() const { return size; };
+  // Disables CPU readback when point sampling isn't used.
+  void setCpuSamplingEnabled(bool enabled) { cpuSamplingEnabled = enabled; }
+  bool isCpuSamplingEnabled() const { return cpuSamplingEnabled; }
+
+  glm::vec2 getSize() const { return size; }
   const std::string getParameterGroupName() const;
   ofParameterGroup& getParameterGroup();
-  bool isReady() { return videoFbo.getSource().isAllocated() && startupFrame == 0; };
+  bool isReady() const { return videoFbo.getSource().isAllocated() && startupFrame == 0; };
 
   bool isVideoVisible() const { return videoVisible; }
   bool isMotionVisible() const { return motionVisible; }
@@ -48,13 +53,15 @@ private:
   OpticalFlowShader opticalFlowShader;
   int startupFrame { -30 }; // ignore the first few frames
   
-  ofFloatPixels opticalFlowPixels; // only for trySampleMotion
+  // Only allocated/updated when CPU sampling is enabled.
+  ofFloatPixels opticalFlowPixels;
+  bool cpuSamplingEnabled { false };
 
   ofParameterGroup parameters;
-  ofParameter<float> xFlowThresholdNeg {"xFlowSampleThresholdNeg", -0.05, -0.5, 0.0};
-  ofParameter<float> xFlowThresholdPos {"xFlowSampleThresholdPos", 0.05, 0.0, 0.5};
-  ofParameter<float> yFlowThresholdNeg {"yFlowSampleThresholdNeg", -0.05, -0.5, 0.0};
-  ofParameter<float> yFlowThresholdPos {"yFlowSampleThresholdPos", 0.05, 0.0, 0.5};
+
+  // Gate for accepting sampled flow vectors (in flow-texture units, not pixel-scaled).
+  // This ends up being venue/camera dependent; allow a wide range.
+  ofParameter<float> minSpeedMagnitude {"MinSpeedMagnitude", 0.40f, 0.0f, 1.0f};
 
   bool videoVisible { false };
   bool motionVisible { false };

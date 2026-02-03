@@ -147,8 +147,10 @@ void MotionFromVideo::update() {
     }
   }
   
-  opticalFlowFbo.readToPixels(opticalFlowPixels);
-//  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
+  if (cpuSamplingEnabled) {
+    opticalFlowFbo.readToPixels(opticalFlowPixels);
+    //  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
+  }
 }
 
 // Returns normalised position and scaled velocity
@@ -157,8 +159,11 @@ std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
   
   float x = ofRandom(size.x-1);
   float y = ofRandom(size.y-1);
+  if (!cpuSamplingEnabled) return {};
+
   auto c = opticalFlowPixels.getColor(x, y);
-  if (c.r > xFlowThresholdPos || c.r < xFlowThresholdNeg || c.g > yFlowThresholdPos || c.g < yFlowThresholdNeg) {
+  float speed = std::sqrt(c.r * c.r + c.g * c.g);
+  if (speed >= minSpeedMagnitude) {
     return { glm::vec4 { x / size.x, y / size.y, c.r / size.x, c.g / size.x } };
   }
   return {};
@@ -172,10 +177,7 @@ ofParameterGroup& MotionFromVideo::getParameterGroup() {
   if (parameters.size() == 0) {
     parameters.setName(getParameterGroupName());
     parameters.add(opticalFlowShader.getParameterGroup());
-    parameters.add(xFlowThresholdNeg);
-    parameters.add(xFlowThresholdPos);
-    parameters.add(yFlowThresholdNeg);
-    parameters.add(yFlowThresholdPos);
+    parameters.add(minSpeedMagnitude);
   }
   return parameters;
 }
