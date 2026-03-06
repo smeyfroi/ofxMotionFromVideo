@@ -57,8 +57,28 @@ void MotionFromVideo::setPositionSeconds(int seconds) {
 }
 
 void MotionFromVideo::stop() {
+  useExternalFrames = false;
+  externalCurrentFrameFbo = nullptr;
+  externalPreviousFrameFbo = nullptr;
+  externalHasNewFrame = false;
+
   if (videoPlayer.isInitialized()) videoPlayer.close();
   if (videoGrabber.isInitialized()) videoGrabber.close();
+}
+
+void MotionFromVideo::setExternalFrames(const ofFbo* currentFrameFbo, const ofFbo* previousFrameFbo, bool hasNewFrame) {
+  useExternalFrames = currentFrameFbo && previousFrameFbo;
+  externalCurrentFrameFbo = currentFrameFbo;
+  externalPreviousFrameFbo = previousFrameFbo;
+  externalHasNewFrame = hasNewFrame;
+
+  if (useExternalFrames && externalCurrentFrameFbo && externalCurrentFrameFbo->isAllocated()) {
+    glm::vec2 externalSize { externalCurrentFrameFbo->getWidth(), externalCurrentFrameFbo->getHeight() };
+    if (!opticalFlowFbo.isAllocated() || externalSize != size) {
+      initialiseFbos(externalSize);
+      startupFrame = -30;
+    }
+  }
 }
 
 void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
@@ -102,19 +122,54 @@ void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
   ofClear(ofFloatColor { 0.0, 0.0, 0.0, 1.0 });
   opticalFlowFbo.end();
   
-  opticalFlowShader.load();
+  if (!opticalFlowShaderLoaded) {
+    opticalFlowShader.load();
+    opticalFlowShaderLoaded = true;
+  }
 }
 
 void MotionFromVideo::update() {
+  // External mode: consumer provides current+previous GPU frames.
+  if (useExternalFrames) {
+    if (!externalCurrentFrameFbo || !externalPreviousFrameFbo) return;
+    if (!externalCurrentFrameFbo->isAllocated() || !externalPreviousFrameFbo->isAllocated()) return;
+
+    const glm::vec2 externalSize { externalCurrentFrameFbo->getWidth(), externalCurrentFrameFbo->getHeight() };
+    if (!opticalFlowFbo.isAllocated() || externalSize != size) {
+      initialiseFbos(externalSize);
+      startupFrame = -30;
+    }
+
+    if (externalHasNewFrame) {
+      if (startupFrame == 0) {
+        opticalFlowFbo.begin();
+        // OpticalFlowShader takes a non-const lastFrame argument, but does not modify it.
+        auto& lastFrame = const_cast<ofFbo&>(*externalPreviousFrameFbo);
+        opticalFlowShader.render(size.x, size.y, *externalCurrentFrameFbo, lastFrame);
+        opticalFlowFbo.end();
+      } else {
+        startupFrame++;
+      }
+    }
+
+    // CPU sampling only when we have new motion data.
+    if (cpuSamplingEnabled && externalHasNewFrame && startupFrame == 0) {
+      opticalFlowFbo.readToPixels(opticalFlowPixels);
+    }
+
+    return;
+  }
+
+  // Internal mode: own and advance camera/file source.
   if (!videoFbo.getSource().isAllocated()) return;
-  
+
   // Guard against update after stop() - video may have been closed
   if (isGrabbing) {
     if (!videoGrabber.isInitialized()) return;
   } else {
     if (!videoPlayer.isLoaded()) return;
   }
-  
+
   bool hasNewFrame = false;
   if (isGrabbing) {
     videoGrabber.update();
@@ -123,7 +178,7 @@ void MotionFromVideo::update() {
     videoPlayer.update();
     hasNewFrame = videoPlayer.isFrameNew();
   }
-  
+
   if (hasNewFrame) {
     // target is last frame, source is current frame
     videoFbo.swap();
@@ -137,7 +192,7 @@ void MotionFromVideo::update() {
       texture.draw(0.0, 0.0);
     }
     videoFbo.getSource().end();
-      
+
     if (startupFrame == 0) {
       opticalFlowFbo.begin();
       opticalFlowShader.render(size.x, size.y, videoFbo.getSource(), videoFbo.getTarget());
@@ -145,11 +200,11 @@ void MotionFromVideo::update() {
     } else {
       startupFrame++;
     }
-  }
-  
-  if (cpuSamplingEnabled) {
-    opticalFlowFbo.readToPixels(opticalFlowPixels);
-    //  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
+
+    if (cpuSamplingEnabled && startupFrame == 0) {
+      opticalFlowFbo.readToPixels(opticalFlowPixels);
+      //  if (isGrabbing) opticalFlowPixels.mirror(false, true); // ************************
+    }
   }
 }
 
@@ -214,6 +269,10 @@ void MotionFromVideo::draw() {
 
 // For debug only
 void MotionFromVideo::drawVideo() {
+  if (useExternalFrames && externalCurrentFrameFbo && externalCurrentFrameFbo->isAllocated()) {
+    drawFbo(*externalCurrentFrameFbo, /*mirrored*/ false);
+    return;
+  }
   drawFbo(videoFbo.getSource(), isGrabbing);
 }
 
