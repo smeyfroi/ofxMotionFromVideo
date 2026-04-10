@@ -57,6 +57,7 @@ void MotionFromVideo::stop() {
   externalFrameSourcePtr.reset();
   startupFrame = -30;
   size = { 0.0f, 0.0f };
+  cpuSamplingPixelsValid = false;
 }
 
 void MotionFromVideo::setExternalFrames(const ofFbo* currentFrameFbo,
@@ -102,11 +103,13 @@ void MotionFromVideo::initialiseFbos(glm::vec2 size_) {
 
 void MotionFromVideo::update() {
   if (!frameSourcePtr) {
+    cpuSamplingPixelsValid = false;
     return;
   }
 
   frameSourcePtr->update();
   if (!frameSourcePtr->isReady()) {
+    cpuSamplingPixelsValid = false;
     return;
   }
 
@@ -114,9 +117,16 @@ void MotionFromVideo::update() {
   if (!opticalFlowFbo.isAllocated() || sourceSize != size) {
     initialiseFbos(sourceSize);
     startupFrame = -30;
+    cpuSamplingPixelsValid = false;
   }
 
   if (!frameSourcePtr->isFrameNew()) {
+    if (!cpuSamplingEnabled) {
+      cpuSamplingPixelsValid = false;
+    } else if (startupFrame == 0 && opticalFlowFbo.isAllocated()) {
+      opticalFlowFbo.readToPixels(opticalFlowPixels);
+      cpuSamplingPixelsValid = opticalFlowPixels.isAllocated();
+    }
     return;
   }
 
@@ -128,14 +138,18 @@ void MotionFromVideo::update() {
 
     if (cpuSamplingEnabled) {
       opticalFlowFbo.readToPixels(opticalFlowPixels);
+      cpuSamplingPixelsValid = opticalFlowPixels.isAllocated();
+    } else {
+      cpuSamplingPixelsValid = false;
     }
   } else {
     startupFrame++;
+    cpuSamplingPixelsValid = false;
   }
 }
 
 std::optional<glm::vec4> MotionFromVideo::trySampleMotion() {
-  if (!isReady() || !cpuSamplingEnabled) {
+  if (!isReady() || !cpuSamplingEnabled || !cpuSamplingPixelsValid) {
     return {};
   }
 

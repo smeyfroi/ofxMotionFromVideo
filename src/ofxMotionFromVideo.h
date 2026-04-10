@@ -66,6 +66,7 @@ private:
 
   ofFloatPixels opticalFlowPixels;
   bool cpuSamplingEnabled { false };
+  bool cpuSamplingPixelsValid { false };
 
   ofParameterGroup parameters;
   ofParameter<float> minSpeedMagnitude {"MinSpeedMagnitude", 0.40f, 0.0f, 1.0f};
