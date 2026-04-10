@@ -1,5 +1,3 @@
 ofxGui
-ofxHistoryPlot
 ofxRenderer
 ofxMotionFromVideo
-ofxTimeMeasurements

@@ -1,90 +1,114 @@
 #include "ofApp.h"
-#include <filesystem>
 
-constexpr float FLUID_SIM_SCALE = 0.5;
+namespace {
 
-//--------------------------------------------------------------
+constexpr float FLUID_SIM_SCALE = 0.5f;
+
+std::string truncatePath(const std::string& path, std::size_t maxLength = 72) {
+  if (path.size() <= maxLength) {
+    return path;
+  }
+  return "..." + path.substr(path.size() - (maxLength - 3));
+}
+
+} // namespace
+
 void ofApp::setup() {
-  ofDisableArbTex(); // required for texture2D to work in GLSL, makes texture coords normalized
+  ofDisableArbTex();
   ofEnableAlphaBlending();
 
-  motionFromVideo.load("/Users/steve/Documents/music-source-material/belfast/trombone-trimmed.mov", true); // mute
+  externalFrameSourcePtr = std::make_shared<ExternalFrameSource>();
+  motionFromVideo.setFrameSource(externalFrameSourcePtr);
+  motionFromVideo.setVideoVisible(true);
+  motionFromVideo.setMotionVisible(true);
 
-  fluidSimulation.setup(ofGetWindowSize()*FLUID_SIM_SCALE);
+  activateCameraSource();
+
+  fluidSimulation.setup(ofGetWindowSize() * FLUID_SIM_SCALE);
   parameters.add(motionFromVideo.getParameterGroup());
   parameters.add(fluidSimulation.getParameterGroup());
   gui.setup(parameters);
-  
+
   addTextureShader.load();
 }
 
-//--------------------------------------------------------------
-void ofApp::update(){
-  motionFromVideo.update();
-  
-  // Dump some of the video into the fluid values
-  addTextureShader.render(fluidSimulation.getFlowValuesFbo(), motionFromVideo.getVideoFbo().getTexture(), 0.001);
+void ofApp::update() {
+  if (upstreamSourcePtr) {
+    upstreamSourcePtr->update();
+    externalFrameSourcePtr->setFrames(&upstreamSourcePtr->getCurrentFrameFbo(),
+                                      &upstreamSourcePtr->getPreviousFrameFbo(),
+                                      upstreamSourcePtr->isFrameNew(),
+                                      upstreamSourcePtr->isMirrored());
+  }
 
-  // Add some of the motion into the fluid velocities
-  addTextureShader.render(fluidSimulation.getFlowVelocitiesFbo(), motionFromVideo.getMotionFbo().getTexture(), 0.01);
-  
+  motionFromVideo.update();
+
+  if (motionFromVideo.getVideoFbo().isAllocated()) {
+    addTextureShader.render(fluidSimulation.getFlowValuesFbo(), motionFromVideo.getVideoFbo().getTexture(), 0.001f);
+  }
+  if (motionFromVideo.getMotionFbo().isAllocated()) {
+    addTextureShader.render(fluidSimulation.getFlowVelocitiesFbo(), motionFromVideo.getMotionFbo().getTexture(), 0.01f);
+  }
+
   fluidSimulation.update();
 }
 
-//--------------------------------------------------------------
-void ofApp::draw(){
+void ofApp::draw() {
   ofSetWindowTitle(ofToString(ofGetFrameRate()));
   fluidSimulation.draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+
   ofPushMatrix();
   ofScale(ofGetWindowWidth(), ofGetWindowHeight());
   motionFromVideo.draw();
   ofPopMatrix();
+
+  std::vector<std::string> lines {
+    "example_VideoMotionIntoFluid",
+    "External frame bridge demo",
+    "Mode: " + sourceLabel,
+    "Keys: c = camera, V = toggle video, M = toggle motion",
+    "Drop a video file to switch the upstream source (optional)"
+  };
+
+  if (!droppedFilePath.empty()) {
+    lines.push_back("Last dropped file: " + truncatePath(droppedFilePath));
+  }
+
+  ofDrawBitmapStringHighlight(ofJoinString(lines, "\n"), 20, 28);
   gui.draw();
 }
 
-//--------------------------------------------------------------
-void ofApp::exit(){
-}
+void ofApp::keyPressed(int key) {
+  if (key == 'c' || key == 'C') {
+    activateCameraSource();
+    return;
+  }
 
-//--------------------------------------------------------------
-void ofApp::keyPressed(int key){
+  if (upstreamSourcePtr && upstreamSourcePtr->keyPressed(key)) {
+    return;
+  }
+
   motionFromVideo.keyPressed(key);
 }
 
-//--------------------------------------------------------------
-void ofApp::keyReleased(int key){
+void ofApp::dragEvent(ofDragInfo dragInfo) {
+  if (dragInfo.files.empty()) {
+    return;
+  }
 
+  activateFileSource(dragInfo.files.front());
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y){
-
+void ofApp::activateCameraSource() {
+  setUpstreamSource(std::make_shared<CameraFrameSource>(0, glm::vec2 { 1280.0f, 720.0f }), "camera");
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
+void ofApp::activateFileSource(const std::string& path) {
+  droppedFilePath = path;
+  setUpstreamSource(std::make_shared<VideoFileFrameSource>(path, true), "file");
 }
 
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+void ofApp::setUpstreamSource(std::shared_ptr<IFrameSource> source, const std::string& label) {
+  upstreamSourcePtr = std::move(source);
+  sourceLabel = label;
 }

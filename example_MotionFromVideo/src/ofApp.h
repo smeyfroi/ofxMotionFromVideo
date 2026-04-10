@@ -1,31 +1,31 @@
 #pragma once
 
-#include "ofMain.h"
-#include "ofxMotionFromVideo.h"
-#include "ofxGui.h"
+#include <memory>
+#include <string>
 
-class ofApp: public ofBaseApp{
+#include "ofMain.h"
+#include "ofxGui.h"
+#include "ofxMotionFromVideo.h"
+
+class ofApp : public ofBaseApp {
 public:
-  void setup();
-  void update();
-  void draw();
-  void exit();
-  
-  void keyPressed(int key);
-  void keyReleased(int key);
-  void mouseMoved(int x, int y);
-  void mouseDragged(int x, int y, int button);
-  void mousePressed(int x, int y, int button);
-  void mouseReleased(int x, int y, int button);
-  void windowResized(int w, int h);
-  void dragEvent(ofDragInfo dragInfo);
-  void gotMessage(ofMessage msg);
-  
+  void setup() override;
+  void update() override;
+  void draw() override;
+  void keyPressed(int key) override;
+  void dragEvent(ofDragInfo dragInfo) override;
+
 private:
+  void activateCameraSource();
+  void activateFileSource(const std::string& path);
+  void setSource(std::shared_ptr<IFrameSource> source, const std::string& label);
+
   MotionFromVideo motionFromVideo;
-  
-  bool guiVisible { false };
+  std::shared_ptr<IFrameSource> frameSourcePtr;
+
   ofxPanel gui;
   ofParameterGroup parameters;
 
+  std::string sourceLabel = "none";
+  std::string droppedFilePath;
 };

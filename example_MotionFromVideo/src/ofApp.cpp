@@ -1,92 +1,85 @@
 #include "ofApp.h"
-#include <filesystem>
-#include "ofxTimeMeasurements.h"
 
-//--------------------------------------------------------------
+namespace {
+
+std::string truncatePath(const std::string& path, std::size_t maxLength = 72) {
+  if (path.size() <= maxLength) {
+    return path;
+  }
+  return "..." + path.substr(path.size() - (maxLength - 3));
+}
+
+} // namespace
+
 void ofApp::setup() {
   ofDisableArbTex();
   ofSetFrameRate(30);
 
-//  motionFromVideo.load(ofToDataPath("trimmed.mov"));
-  motionFromVideo.initialiseCamera(0, { 1280, 720 });
-  
+  activateCameraSource();
+
+  motionFromVideo.setVideoVisible(true);
+  motionFromVideo.setMotionVisible(true);
+
   parameters.add(motionFromVideo.getParameterGroup());
   gui.setup(parameters);
-  
-  TIME_SAMPLE_SET_FRAMERATE(30);
 }
 
-//--------------------------------------------------------------
-void ofApp::update(){
-  TSGL_START("update");
-  TS_START("update");
+void ofApp::update() {
   motionFromVideo.update();
-  TS_STOP("update");
-  TSGL_STOP("update");
 }
 
-//--------------------------------------------------------------
-void ofApp::draw(){
-  TSGL_START("update");
-  TS_START("update");
+void ofApp::draw() {
+  ofBackground(0);
 
-//  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-//  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
-//  motionFromVideo.getVideoFbo().draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
-  ofEnableBlendMode(OF_BLENDMODE_ALPHA);
-  ofSetColor(ofFloatColor { 1.0, 1.0, 1.0, 1.0 });
-  motionFromVideo.getMotionFbo().draw(0, 0, ofGetWindowWidth(), ofGetWindowHeight());
+  ofPushMatrix();
+  ofScale(ofGetWidth(), ofGetHeight());
+  motionFromVideo.draw();
+  ofPopMatrix();
 
+  std::vector<std::string> lines {
+    "example_MotionFromVideo",
+    "Mode: " + sourceLabel,
+    "Keys: c = camera, V = toggle video, M = toggle motion",
+    "Drop a video file to switch to file playback (optional)",
+    "Arrow keys seek when using a file source"
+  };
+
+  if (!droppedFilePath.empty()) {
+    lines.push_back("Last dropped file: " + truncatePath(droppedFilePath));
+  }
+
+  ofDrawBitmapStringHighlight(ofJoinString(lines, "\n"), 20, 28);
   gui.draw();
-  TS_STOP("update");
-  TSGL_STOP("update");
 }
 
-//--------------------------------------------------------------
-void ofApp::exit(){
-}
+void ofApp::keyPressed(int key) {
+  if (key == 'c' || key == 'C') {
+    activateCameraSource();
+    return;
+  }
 
-//--------------------------------------------------------------
-void ofApp::keyPressed(int key){
   motionFromVideo.keyPressed(key);
 }
 
-//--------------------------------------------------------------
-void ofApp::keyReleased(int key){
+void ofApp::dragEvent(ofDragInfo dragInfo) {
+  if (dragInfo.files.empty()) {
+    return;
+  }
 
+  activateFileSource(dragInfo.files.front());
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseMoved(int x, int y){
-
+void ofApp::activateCameraSource() {
+  setSource(std::make_shared<CameraFrameSource>(0, glm::vec2 { 1280.0f, 720.0f }), "camera");
 }
 
-//--------------------------------------------------------------
-void ofApp::mouseDragged(int x, int y, int button){
-
+void ofApp::activateFileSource(const std::string& path) {
+  droppedFilePath = path;
+  setSource(std::make_shared<VideoFileFrameSource>(path, true), "file");
 }
 
-//--------------------------------------------------------------
-void ofApp::mousePressed(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::mouseReleased(int x, int y, int button){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::windowResized(int w, int h){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::gotMessage(ofMessage msg){
-
-}
-
-//--------------------------------------------------------------
-void ofApp::dragEvent(ofDragInfo dragInfo){ 
-
+void ofApp::setSource(std::shared_ptr<IFrameSource> source, const std::string& label) {
+  frameSourcePtr = std::move(source);
+  sourceLabel = label;
+  motionFromVideo.setFrameSource(frameSourcePtr);
 }

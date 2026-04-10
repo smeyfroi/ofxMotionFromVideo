@@ -1,49 +1,50 @@
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <string>
 
-#include "ofMain.h"
-#include "PingPongFbo.h"
+#include "CameraFrameSource.hpp"
+#include "ExternalFrameSource.hpp"
+#include "IFrameSource.hpp"
 #include "OpticalFlowShader.h"
+#include "VideoFileFrameSource.hpp"
+#include "ofMain.h"
 
 class MotionFromVideo {
-
 public:
   ~MotionFromVideo();
-  void initialiseCamera(int deviceID, glm::vec2 size);
+
+  void setFrameSource(std::shared_ptr<IFrameSource> frameSource);
+  const std::shared_ptr<IFrameSource>& getFrameSource() const { return frameSourcePtr; }
+
+  void initialiseCamera(int deviceId, glm::vec2 size);
   void load(const std::string& path, bool mute = true);
   void setPositionSeconds(int seconds);
   void stop();
 
-  // External frame source (Synth-owned camera/file stream).
-  // When set, MotionFromVideo will not own/advance any grabber/player.
-  void setExternalFrames(const ofFbo* currentFrameFbo, const ofFbo* previousFrameFbo, bool hasNewFrame);
+  void setExternalFrames(const ofFbo* currentFrameFbo,
+                         const ofFbo* previousFrameFbo,
+                         bool hasNewFrame,
+                         bool mirrored = false);
 
   void update();
   bool keyPressed(int key);
   void draw();
   void drawVideo();
-  const ofFbo& getVideoFbo() const { return videoFbo.getSource(); };
+  const ofFbo& getVideoFbo() const;
   void drawMotion();
-  const ofFbo& getMotionFbo() const { return opticalFlowFbo; };
-  
-  // Returns { x, y, dx, dy } where x,y are normalized [0..1] and dx,dy are scaled velocities.
+  const ofFbo& getMotionFbo() const { return opticalFlowFbo; }
+
   std::optional<glm::vec4> trySampleMotion();
 
-  // Disables CPU readback when point sampling isn't used.
   void setCpuSamplingEnabled(bool enabled) { cpuSamplingEnabled = enabled; }
   bool isCpuSamplingEnabled() const { return cpuSamplingEnabled; }
 
   glm::vec2 getSize() const { return size; }
   const std::string getParameterGroupName() const;
   ofParameterGroup& getParameterGroup();
-  bool isReady() const {
-    if (useExternalFrames) {
-      return externalCurrentFrameFbo && externalCurrentFrameFbo->isAllocated() && startupFrame == 0;
-    }
-    return videoFbo.getSource().isAllocated() && startupFrame == 0;
-  };
+  bool isReady() const;
 
   bool isVideoVisible() const { return videoVisible; }
   bool isMotionVisible() const { return motionVisible; }
@@ -51,33 +52,22 @@ public:
   void setMotionVisible(bool visible) { motionVisible = visible; }
 
 private:
-  void initialiseFbos(glm::vec2 size);
+  void initialiseFbos(glm::vec2 size_);
 
-  bool isGrabbing;
-  ofVideoGrabber videoGrabber;
-  ofVideoPlayer videoPlayer;
+  std::shared_ptr<IFrameSource> frameSourcePtr;
+  std::shared_ptr<ExternalFrameSource> externalFrameSourcePtr;
+  ofFbo emptyFrameFbo;
 
-  glm::vec2 size;
-  PingPongFbo videoFbo;
+  glm::vec2 size { 0.0f, 0.0f };
   ofFbo opticalFlowFbo;
   OpticalFlowShader opticalFlowShader;
   bool opticalFlowShaderLoaded { false };
-  int startupFrame { -30 }; // ignore the first few frames
+  int startupFrame { -30 };
 
-  // External stream frames (if set)
-  bool useExternalFrames { false };
-  const ofFbo* externalCurrentFrameFbo { nullptr };
-  const ofFbo* externalPreviousFrameFbo { nullptr };
-  bool externalHasNewFrame { false };
-  
-  // Only allocated/updated when CPU sampling is enabled.
   ofFloatPixels opticalFlowPixels;
   bool cpuSamplingEnabled { false };
 
   ofParameterGroup parameters;
-
-  // Gate for accepting sampled flow vectors (in flow-texture units, not pixel-scaled).
-  // This ends up being venue/camera dependent; allow a wide range.
   ofParameter<float> minSpeedMagnitude {"MinSpeedMagnitude", 0.40f, 0.0f, 1.0f};
 
   bool videoVisible { false };

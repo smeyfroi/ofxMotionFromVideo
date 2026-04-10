@@ -16,7 +16,7 @@
 
 meta:
 	ADDON_NAME = ofxMotionFromVideo
-	ADDON_DESCRIPTION = Generate motion vector from video
+	ADDON_DESCRIPTION = GPU optical flow from pluggable frame sources
 	ADDON_AUTHOR = @smeyfroi
 	ADDON_TAGS = "addon"
 	ADDON_URL = http://github.com/smeyfroi/ofxMotionFromVideo

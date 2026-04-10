@@ -3,10 +3,11 @@ AGENTS: how to build, test, and code in this repo
 - Project type: openFrameworks C++ addon with Xcode/Makefile examples. No first-party tests exist (tests/.gitkeep only).
 
 Build
-- macOS (Xcode GUI): open example_MotionFromVideo/example_MotionFromVideo.xcodeproj or example_VideoMotionIntoFluid/example_VideoMotionIntoFluid.xcodeproj, select a scheme, Build & Run.
+- macOS (Xcode GUI): open `example_MotionFromVideo/example_MotionFromVideo.xcodeproj`, `example_motionFileInput/example_motionFileInput.xcodeproj`, or `example_VideoMotionIntoFluid/example_VideoMotionIntoFluid.xcodeproj`, select a scheme, Build & Run.
 - macOS/Linux (Make):
-  - cd example_MotionFromVideo && make -j
-  - cd example_VideoMotionIntoFluid && make -j
+  - `cd example_MotionFromVideo && make -j`
+  - `cd example_motionFileInput && make -j`
+  - `cd example_VideoMotionIntoFluid && make -j`
 - CI references: .travis.yml (Linux/macOS) and .appveyor.yml (Windows) rely on openFrameworks scripts/ci/addons/build.*; mirror those if scripting CI locally.
 
 Lint/format
